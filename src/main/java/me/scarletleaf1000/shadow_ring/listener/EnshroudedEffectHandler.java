@@ -8,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import me.scarletleaf1000.shadow_ring.ShadowRing;
 import me.scarletleaf1000.shadow_ring.effect.ModEffects;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,6 +21,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.event.RenderLivingEvent;
 import net.minecraftforge.event.TickEvent;
@@ -94,28 +96,6 @@ public class EnshroudedEffectHandler {
                     event.setCanceled(true);
                 }
             }
-        }
-    }
-
-    @SubscribeEvent
-    public static void onRenderLiving(RenderLivingEvent event) {
-        if (!(event.getEntity() instanceof Player target)) return;
-
-        // If the target does NOT have Enshrouded, render normally
-        if (!target.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) return;
-
-        // Get the viewer (the player doing the rendering)
-        Player viewer = Minecraft.getInstance().player;
-        if (viewer == null) return;
-
-        // If viewer is also Enshrouded, allow rendering
-        if (viewer.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) {
-            return; // don’t cancel → enshrouded can see each other
-        }
-
-        // Otherwise, hide the enshrouded player
-        if (event.isCancelable()) {
-            event.setCanceled(true);
         }
     }
 
@@ -317,16 +297,6 @@ public class EnshroudedEffectHandler {
         }
     }
 
-    @SubscribeEvent
-    public static void onRenderOverlay(RenderGuiOverlayEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null && mc.player.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) {
-            //if (event.getOverlay() == VanillaGuiOverlay.ALL.element()) {
-            renderOverlay(mc);
-            //}
-        }
-    }
-
     private static void renderOverlay(Minecraft mc) {
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
@@ -359,4 +329,39 @@ public class EnshroudedEffectHandler {
         RenderSystem.enableDepthTest();
     }
 
+    @Mod.EventBusSubscriber(value = Dist.CLIENT, modid = ShadowRing.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public class EnshroudedRenderHandler {
+
+        @SubscribeEvent
+        public static void onRenderLiving(RenderLivingEvent.Pre<?, ?> event) {
+            if (!(event.getEntity() instanceof Player target)) return;
+
+            // If the target does NOT have Enshrouded, render normally
+            if (!target.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) return;
+
+            // Get the viewer (the client player doing the rendering)
+            LocalPlayer viewer = Minecraft.getInstance().player;
+            if (viewer == null) return;
+
+            // If viewer is also Enshrouded, allow rendering
+            if (viewer.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) {
+                return; // enshrouded can see each other
+            }
+
+            // Otherwise, hide the enshrouded player
+            if (event.isCancelable()) {
+                event.setCanceled(true);
+            }
+        }
+
+        @SubscribeEvent
+        public static void onRenderOverlay(RenderGuiOverlayEvent.Post event) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.hasEffect(ModEffects.ENSHROUDED_EFFECT.get())) {
+                //if (event.getOverlay() == VanillaGuiOverlay.ALL.element()) {
+                renderOverlay(mc);
+                //}
+            }
+        }
+    }
 }
