@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": { "item": "minecraft:amethyst_shard" },
+    "P": { "item": "minecraft:popped_chorus_fruit" },
+    "N": { "item": "minecraft:nether_star" }
+  },
+  "pattern": [
+    "NAP",
+    "A A",
+    "PAP"
+  ],
+  "result": {
+    "count": 1,
+    "item": "shadow_ring:shadow_ring"
+  }
+}
